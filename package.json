@@ -11,7 +11,7 @@
   ],
   "activationEvents": [
     "onCommand:rails-vscode.toggleImplementationSpec",
-    "onCommand:rails-vscode.goToSchemaDefinition"
+    "onCommand:rails-vscode.navigateToModelSchema"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -21,8 +21,8 @@
         "title": "Rails: Toggle Implementation/Spec File"
       },
       {
-        "command": "rails-vscode.goToSchemaDefinition",
-        "title": "Rails: Go to Schema Definition"
+        "command": "rails-vscode.navigateToModelSchema",
+        "title": "Rails: Navigate Model/Schema Definition"
       }
     ]
   },
