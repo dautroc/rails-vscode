@@ -1,3 +1,15 @@
+# [1.1.0](https://github.com/dautroc/rails-vscode/compare/v1.0.0...v1.1.0) (2025-05-10)
+
+
+### Bug Fixes
+
+* **name:** change name to fix duplicated name ([c8c5335](https://github.com/dautroc/rails-vscode/commit/c8c533522c304ee6726012c4f2bad4002daaf2a3))
+
+
+### Features
+
+* **ui:** update extension icon ([03568f4](https://github.com/dautroc/rails-vscode/commit/03568f4be08e4e5a4379bb1cec7e1375a43926fb))
+
 # 1.0.0 (2025-05-10)
 
 
