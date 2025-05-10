@@ -19,13 +19,6 @@
       }
     ],
     [
-      "semantic-release-vsce",
-      {
-        "packageVsix": "rails-vscode-${nextRelease.version}.vsix",
-        "publishPackagePath": "rails-vscode-${nextRelease.version}.vsix"
-      }
-    ],
-    [
       "@semantic-release/git",
       {
         "assets": ["package.json", "package-lock.json", "CHANGELOG.md"],
@@ -34,11 +27,7 @@
     ],
     [
       "@semantic-release/github",
-      {
-        "assets": [
-          { "path": "rails-vscode-${nextRelease.version}.vsix", "label": "Rails VSCode Extension VSIX" }
-        ]
-      }
+      {}
     ]
   ]
 } 
