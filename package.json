@@ -59,5 +59,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/dautroc/rails-vscode.git"
-  }
+  },
+  "icon": "rails.png"
 }
