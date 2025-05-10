@@ -4,33 +4,31 @@ on:
   push:
     branches:
       - main
+
 jobs:
   release:
-    name: Release VSCode Extension
+    name: Create Release
     runs-on: ubuntu-latest
     permissions:
       contents: write
       issues: write
       pull-requests: write
+      id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Required for semantic-release to analyze commit history
+          persist-credentials: false 
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*' # Use a Long Term Support version of Node.js
+          node-version: "lts/*"
 
       - name: Install dependencies
-        run: npm ci # Use ci for faster, more reliable builds in CI
-
-      - name: Compile TypeScript
-        run: npm run compile
+        run: npm ci
 
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VSCE_PAT: ${{ secrets.VSCE_PAT }} # Personal Access Token for VS Code Marketplace
         run: npx semantic-release 
