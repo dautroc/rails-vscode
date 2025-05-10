@@ -3,6 +3,7 @@
   "displayName": "Rails VSCode",
   "description": "An extension for enhanced navigation in Ruby on Rails projects.",
   "version": "0.0.1",
+  "publisher": "dautroc",
   "engines": {
     "vscode": "^1.96.0"
   },
