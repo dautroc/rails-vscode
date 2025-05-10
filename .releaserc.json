@@ -1,0 +1,44 @@
+{
+  "branches": [
+    "main"
+  ],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    [
+      "@semantic-release/changelog",
+      {
+        "changelogFile": "CHANGELOG.md"
+      }
+    ],
+    [
+      "@semantic-release/npm",
+      {
+        "npmPublish": false,
+        "tarballDir": "dist"
+      }
+    ],
+    [
+      "semantic-release-vsce",
+      {
+        "packageVsix": "rails-vscode-${nextRelease.version}.vsix",
+        "publishPackagePath": "rails-vscode-${nextRelease.version}.vsix"
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["package.json", "package-lock.json", "CHANGELOG.md"],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          { "path": "rails-vscode-${nextRelease.version}.vsix", "label": "Rails VSCode Extension VSIX" }
+        ]
+      }
+    ]
+  ]
+} 
