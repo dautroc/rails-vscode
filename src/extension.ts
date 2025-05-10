@@ -2,6 +2,34 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 
+function pluralize(name: string): string {
+    if (name.endsWith('y') && !['a', 'e', 'i', 'o', 'u'].includes(name.slice(-2, -1).toLowerCase())) {
+        return name.slice(0, -1) + 'ies'; // category -> categories
+    }
+    if (/(s|x|z|ch|sh)$/i.test(name)) {
+        return name + 'es'; // bus -> buses, box -> boxes, church -> churches, address -> addresses
+    }
+    // status -> statuses (covered by above)
+    return name + 's'; // user -> users, post -> posts
+}
+
+function singularize(name: string): string {
+    if (name.endsWith('ies') && name.length > 3) { // categories -> category
+        return name.slice(0, -3) + 'y';
+    }
+    // buses -> bus, boxes -> box, churches -> church, addresses -> address, statuses -> status
+    if (name.endsWith('es') && name.length > 2) {
+        const base = name.slice(0, -2);
+        // Check if the original was like 'box' from 'boxes' or 'address' from 'addresses'
+        // This simple slice works for many common cases like (s,x,z,ch,sh) + es
+        return base;
+    }
+    if (name.endsWith('s') && !name.endsWith('ss') && name.length > 1) { // users -> user, posts -> post
+        return name.slice(0, -1);
+    }
+    return name; // Default: no change if no rule matches or it's already singular (e.g. "data")
+}
+
 export function activate(context: vscode.ExtensionContext) {
     console.log('Congratulations, your extension "rails-vscode" is now active!');
 
@@ -86,12 +114,97 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    let goToSchemaDefinition = vscode.commands.registerCommand('rails-vscode.goToSchemaDefinition', () => {
-        vscode.window.showInformationMessage('Go to Schema Definition command executed!');
+    let navigateToModelSchema = vscode.commands.registerCommand('rails-vscode.navigateToModelSchema', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showInformationMessage('No active editor found.');
+            return;
+        }
+
+        const document = editor.document;
+        const currentFilePath = document.fileName;
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders) {
+            vscode.window.showErrorMessage('No workspace folder open.');
+            return;
+        }
+        const workspaceRoot = workspaceFolders[0].uri.fsPath;
+        const relativePath = path.relative(workspaceRoot, currentFilePath);
+
+        // Case 1: Current file is db/schema.rb -- Go to Model
+        if (relativePath === path.join('db', 'schema.rb')) {
+            const cursorPosition = editor.selection.active;
+            let tableName: string | null = null;
+            const searchLimit = Math.max(0, cursorPosition.line - 10); // Search up to 10 lines above cursor
+
+            for (let i = cursorPosition.line; i >= searchLimit; i--) {
+                const lineText = document.lineAt(i).text;
+                const match = lineText.match(/^\s*create_table\s+"([^"]+)"/);
+                if (match && match[1]) {
+                    tableName = match[1];
+                    break;
+                }
+            }
+
+            if (tableName) {
+                const modelName = singularize(tableName);
+                const modelPath = path.join(workspaceRoot, 'app', 'models', `${modelName}.rb`);
+
+                if (fs.existsSync(modelPath)) {
+                    const modelDocument = await vscode.workspace.openTextDocument(modelPath);
+                    await vscode.window.showTextDocument(modelDocument);
+                } else {
+                    vscode.window.showInformationMessage(`Model file not found: app/models/${modelName}.rb`);
+                }
+            } else {
+                vscode.window.showInformationMessage('Could not find "create_table" definition near cursor. Please ensure cursor is within or near a table block.');
+            }
+        }
+        // Case 2: Current file is a Model -- Go to schema.rb
+        else if (relativePath.startsWith(path.join('app', 'models')) && currentFilePath.endsWith('.rb')) {
+            const modelName = path.basename(currentFilePath, '.rb');
+            const tableName = pluralize(modelName);
+            const schemaFilePath = path.join(workspaceRoot, 'db', 'schema.rb');
+
+            if (!fs.existsSync(schemaFilePath)) {
+                vscode.window.showErrorMessage('db/schema.rb not found.');
+                return;
+            }
+
+            try {
+                const schemaContent = fs.readFileSync(schemaFilePath, 'utf-8');
+                const lines = schemaContent.split('\n');
+                const searchString = `create_table "${tableName}"`;
+                let lineNumber = -1;
+
+                for (let i = 0; i < lines.length; i++) {
+                    if (lines[i].includes(searchString)) {
+                        lineNumber = i;
+                        break;
+                    }
+                }
+
+                if (lineNumber !== -1) {
+                    const schemaUri = vscode.Uri.file(schemaFilePath);
+                    const schemaDoc = await vscode.workspace.openTextDocument(schemaUri);
+                    const position = new vscode.Position(lineNumber, 0);
+                    await vscode.window.showTextDocument(schemaDoc, { selection: new vscode.Selection(position, position) });
+                } else {
+                    vscode.window.showInformationMessage(`Table definition for "${tableName}" not found in db/schema.rb.`);
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage('Error reading db/schema.rb.');
+                console.error(error);
+            }
+        }
+        // Case 3: Not a recognized file for this command
+        else {
+            vscode.window.showInformationMessage('Please use this command from a Rails model file (e.g., app/models/user.rb) or from db/schema.rb.');
+        }
     });
 
     context.subscriptions.push(toggleImplementationSpec);
-    context.subscriptions.push(goToSchemaDefinition);
+    context.subscriptions.push(navigateToModelSchema);
 }
 
 export function deactivate() {} 
